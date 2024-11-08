@@ -1,0 +1,58 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Game</title>
+</head>
+<body>
+    <h1>Καλωσορίσατε στο Quiz Game</h1>
+    
+    <div id="subject-selection">
+        <h2>Επιλέξτε μάθημα:</h2>
+        <ul id="subjects">
+            {% for subject in subjects %}
+                <li><button onclick="selectSubject('{{ subject }}')">{{ subject.capitalize() }}</button></li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div id="quiz-container" style="display:none;">
+        <h2 id="question">Ερώτηση εδώ</h2>
+        <ul id="choices"></ul>
+        <button onclick="nextQuestion()">Επόμενη Ερώτηση</button>
+    </div>
+
+    <script>
+        let selectedSubject = "";
+
+        function selectSubject(subject) {
+            selectedSubject = subject;
+            document.getElementById('subject-selection').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            fetch(`/get_question?subject=${selectedSubject}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    document.getElementById('question').innerText = data.question;
+                    const choicesList = document.getElementById('choices');
+                    choicesList.innerHTML = '';
+                    data.choices.forEach(choice => {
+                        const li = document.createElement('li');
+                        li.innerText = choice;
+                        choicesList.appendChild(li);
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
+
