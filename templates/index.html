@@ -140,23 +140,23 @@
 
        function checkAnswer(selectedIndex, correctIndex, selectedLi, choicesList) {
            const choices = document.querySelectorAll('#choices li');
-           choices[correctIndex].style.backgroundColor = '#90EE90'; // Πράσινο για τη σωστή απάντηση
            
-           if (selectedIndex === correctIndex) {
+           // Εμφανίζουμε τη σωστή απάντηση αν έχει επιλεγεί λάθος
+           if (selectedIndex !== correctIndex) {
+               choices[correctIndex].style.backgroundColor = '#90EE90'; // Πράσινο για τη σωστή απάντηση
+               document.getElementById('wrongSound').play();
+               alert('Λάθος απάντηση!');
+           } else {
                document.getElementById('correctSound').play();
                score++;
                alert('Σωστή απάντηση!');
-           } else {
-               document.getElementById('wrongSound').play();
-               selectedLi.style.backgroundColor = '#FFB6C1'; // Κόκκινο για λάθος απάντηση
-               alert('Λάθος απάντηση!');
            }
 
-           // Εμφάνιση σωστής απάντησης σε περίπτωση λάθους
+           // Επαναφορά χρωμάτων για τις επόμενες ερωτήσεις
            setTimeout(() => {
                updateScore();
                nextQuestion();
-               choices.forEach(choice => choice.style.backgroundColor = ''); // Επαναφορά χρωμάτων
+               choices.forEach(choice => choice.style.backgroundColor = ''); 
            }, 1500);
        }
 
