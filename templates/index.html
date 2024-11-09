@@ -2,57 +2,131 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Game</title>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Quiz Game</title>
+   <style>
+       .difficulty-btn {
+           margin: 5px;
+           padding: 8px 16px;
+           cursor: pointer;
+       }
+       .difficulty-btn.selected {
+           background-color: #4CAF50;
+           color: white;
+       }
+       #choices li {
+           cursor: pointer;
+           margin: 10px 0;
+           padding: 10px;
+           border: 1px solid #ddd;
+           border-radius: 4px;
+           list-style-type: none;
+       }
+       #choices li:hover {
+           background-color: #f0f0f0;
+       }
+   </style>
 </head>
 <body>
-    <h1>Καλωσορίσατε στο Quiz Game</h1>
-    
-    <div id="subject-selection">
-        <h2>Επιλέξτε μάθημα:</h2>
-        <ul id="subjects">
-            {% for subject in subjects %}
-                <li><button onclick="selectSubject('{{ subject }}')">{{ subject.capitalize() }}</button></li>
-            {% endfor %}
-        </ul>
-    </div>
+   <h1>Καλωσορίσατε στο Quiz Game</h1>
+   
+   <div id="subject-selection">
+       <h2>Επιλέξτε μάθημα:</h2>
+       <ul id="subjects">
+           {% for subject in subjects %}
+               <li><button onclick="selectSubject('{{ subject }}')">{{ subject }}</button></li>
+           {% endfor %}
+       </ul>
+   </div>
 
-    <div id="quiz-container" style="display:none;">
-        <h2 id="question">Ερώτηση εδώ</h2>
-        <ul id="choices"></ul>
-        <button onclick="nextQuestion()">Επόμενη Ερώτηση</button>
-    </div>
+   <div id="difficulty-selection" style="display:none;">
+       <h2>Επιλέξτε επίπεδο δυσκολίας:</h2>
+       <button class="difficulty-btn" onclick="selectDifficulty('easy')">Εύκολο</button>
+       <button class="difficulty-btn" onclick="selectDifficulty('medium')">Μεσαίο</button>
+       <button class="difficulty-btn" onclick="selectDifficulty('hard')">Δύσκολο</button>
+   </div>
 
-    <script>
-        let selectedSubject = "";
+   <div id="quiz-container" style="display:none;">
+       <h2>Μάθημα: <span id="current-subject"></span></h2>
+       <h3>Επίπεδο: <span id="current-difficulty"></span></h3>
+       <h3 id="question">Ερώτηση εδώ</h3>
+       <ul id="choices"></ul>
+       <button onclick="nextQuestion()">Επόμενη Ερώτηση</button>
+       <button onclick="restartQuiz()">Νέο Παιχνίδι</button>
+   </div>
 
-        function selectSubject(subject) {
-            selectedSubject = subject;
-            document.getElementById('subject-selection').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'block';
-            nextQuestion();
-        }
+   <script>
+       let selectedSubject = "";
+       let currentDifficulty = "";
 
-        function nextQuestion() {
-            fetch(`/get_question?subject=${selectedSubject}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        return;
-                    }
-                    document.getElementById('question').innerText = data.question;
-                    const choicesList = document.getElementById('choices');
-                    choicesList.innerHTML = '';
-                    data.choices.forEach(choice => {
-                        const li = document.createElement('li');
-                        li.innerText = choice;
-                        choicesList.appendChild(li);
-                    });
-                });
-        }
-    </script>
+       function selectSubject(subject) {
+           selectedSubject = subject;
+           document.getElementById('current-subject').innerText = subject;
+           document.getElementById('subject-selection').style.display = 'none';
+           document.getElementById('difficulty-selection').style.display = 'block';
+       }
+
+       function selectDifficulty(difficulty) {
+           currentDifficulty = difficulty;
+           document.getElementById('current-difficulty').innerText = 
+               difficulty === 'easy' ? 'Εύκολο' :
+               difficulty === 'medium' ? 'Μεσαίο' : 'Δύσκολο';
+           
+           document.getElementById('difficulty-selection').style.display = 'none';
+           document.getElementById('quiz-container').style.display = 'block';
+           nextQuestion();
+       }
+
+       function nextQuestion() {
+           fetch(`/get_question?subject=${encodeURIComponent(selectedSubject)}&difficulty=${currentDifficulty}`)
+               .then(response => response.json())
+               .then(data => {
+                   if (data.error) {
+                       alert(data.error);
+                       return;
+                   }
+                   document.getElementById('question').innerText = data.question;
+                   const choicesList = document.getElementById('choices');
+                   choicesList.innerHTML = '';
+                   data.answers.forEach((answer, index) => {
+                       const li = document.createElement('li');
+                       li.innerText = answer;
+                       li.onclick = () => checkAnswer(index, data.correct);
+                       choicesList.appendChild(li);
+                   });
+               })
+               .catch(error => {
+                   console.error('Error:', error);
+                   alert('Υπήρξε ένα σφάλμα κατά τη φόρτωση της ερώτησης.');
+               });
+       }
+
+       function checkAnswer(selectedIndex, correctIndex) {
+           const choices = document.querySelectorAll('#choices li');
+           choices[correctIndex].style.backgroundColor = '#90EE90'; // Πράσινο για τη σωστή απάντηση
+           
+           if (selectedIndex === correctIndex) {
+               alert('Σωστή απάντηση!');
+           } else {
+               choices[selectedIndex].style.backgroundColor = '#FFB6C1'; // Κόκκινο για λάθος απάντηση
+               alert('Λάθος απάντηση!');
+           }
+
+           // Περίμενε λίγο πριν την επόμενη ερώτηση
+           setTimeout(() => {
+               nextQuestion();
+               choices.forEach(choice => choice.style.backgroundColor = ''); // Επαναφορά χρωμάτων
+           }, 1500);
+       }
+
+       function restartQuiz() {
+           selectedSubject = "";
+           currentDifficulty = "";
+           document.getElementById('subject-selection').style.display = 'block';
+           document.getElementById('difficulty-selection').style.display = 'none';
+           document.getElementById('quiz-container').style.display = 'none';
+       }
+   </script>
 </body>
 </html>
-
