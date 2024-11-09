@@ -19,7 +19,6 @@ def load_questions(subject, difficulty):
         print("Δεν βρέθηκε το αρχείο:", file_path)
         return None
 
-
 @app.route('/')
 def index():
     """Αρχική σελίδα για επιλογή μαθήματος και βαθμού δυσκολίας."""
@@ -32,9 +31,17 @@ def get_question():
     subject = request.args.get('subject')
     difficulty = request.args.get('difficulty')
     questions = load_questions(subject, difficulty)
+    
     if questions:
         question = random.choice(questions)
+        # Αν η σωστή απάντηση είναι η 1, 2, 3 κλπ. (όχι 0), κάνουμε την κατάλληλη αντιστοίχιση
+        correct_answer_index = int(question['answer']) - 1  # Αν η σωστή απάντηση είναι 1, το index είναι 0 κλπ.
+        
+        # Προσθήκη της σωστής απάντησης στο αποτέλεσμα
+        question['correct_answer'] = question['choices'][correct_answer_index]
+
         return jsonify(question)
+    
     return jsonify({"error": "Το μάθημα ή η βαθμίδα δυσκολίας δεν βρέθηκε"}), 404
 
 if __name__ == '__main__':
