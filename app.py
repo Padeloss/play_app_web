@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, jsonify
 import json
 import os
@@ -34,12 +33,14 @@ def get_question():
     
     if questions:
         question = random.choice(questions)
+        
         # Αν η σωστή απάντηση είναι η 1, 2, 3 κλπ. (όχι 0), κάνουμε την κατάλληλη αντιστοίχιση
         correct_answer_index = int(question['answer']) - 1  # Αν η σωστή απάντηση είναι 1, το index είναι 0 κλπ.
         
         # Προσθήκη της σωστής απάντησης στο αποτέλεσμα
         question['correct_answer'] = question['choices'][correct_answer_index]
-
+        
+        # Επιστρέφουμε την ερώτηση με τις επιλογές
         return jsonify(question)
     
     return jsonify({"error": "Το μάθημα ή η βαθμίδα δυσκολίας δεν βρέθηκε"}), 404
