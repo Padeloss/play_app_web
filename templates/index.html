@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -6,14 +5,36 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>Quiz Game</title>
    <style>
+       body {
+           font-family: Arial, sans-serif;
+           background-image: url('/static/background.jpg'); /* Βάλε την εικόνα φόντου */
+           background-size: cover;
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           color: #333;
+       }
+       .container {
+           background-color: rgba(255, 255, 255, 0.8);
+           border-radius: 10px;
+           padding: 20px;
+           margin-top: 20px;
+           max-width: 600px;
+           text-align: center;
+           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+       }
        .difficulty-btn {
            margin: 5px;
-           padding: 8px 16px;
+           padding: 10px 20px;
            cursor: pointer;
-       }
-       .difficulty-btn.selected {
            background-color: #4CAF50;
            color: white;
+           border: none;
+           border-radius: 5px;
+           font-size: 16px;
+       }
+       .difficulty-btn.selected {
+           background-color: #2E7D32;
        }
        #choices li {
            cursor: pointer;
@@ -22,43 +43,56 @@
            border: 1px solid #ddd;
            border-radius: 4px;
            list-style-type: none;
+           transition: background-color 0.3s;
        }
        #choices li:hover {
            background-color: #f0f0f0;
        }
+       .score {
+           font-size: 18px;
+           margin: 10px 0;
+       }
    </style>
 </head>
 <body>
-   <h1>Καλωσορίσατε στο Quiz Game</h1>
-   
-   <div id="subject-selection">
-       <h2>Επιλέξτε μάθημα:</h2>
-       <ul id="subjects">
-           {% for subject in subjects %}
-               <li><button onclick="selectSubject('{{ subject }}')">{{ subject }}</button></li>
-           {% endfor %}
-       </ul>
+   <div class="container">
+       <h1>Καλωσορίσατε στο Quiz Game</h1>
+       
+       <div id="subject-selection">
+           <h2>Επιλέξτε μάθημα:</h2>
+           <ul id="subjects">
+               {% for subject in subjects %}
+                   <li><button class="difficulty-btn" onclick="selectSubject('{{ subject }}')">{{ subject }}</button></li>
+               {% endfor %}
+           </ul>
+       </div>
+
+       <div id="difficulty-selection" style="display:none;">
+           <h2>Επιλέξτε επίπεδο δυσκολίας:</h2>
+           <button class="difficulty-btn" onclick="selectDifficulty('easy')">Εύκολο</button>
+           <button class="difficulty-btn" onclick="selectDifficulty('medium')">Μεσαίο</button>
+           <button class="difficulty-btn" onclick="selectDifficulty('hard')">Δύσκολο</button>
+       </div>
+
+       <div id="quiz-container" style="display:none;">
+           <h2>Μάθημα: <span id="current-subject"></span></h2>
+           <h3>Επίπεδο: <span id="current-difficulty"></span></h3>
+           <div class="score">Σκορ: <span id="score">0</span></div>
+           <h3 id="question">Ερώτηση εδώ</h3>
+           <ul id="choices"></ul>
+           <button onclick="nextQuestion()">Επόμενη Ερώτηση</button>
+           <button onclick="restartQuiz()">Νέο Παιχνίδι</button>
+       </div>
    </div>
 
-   <div id="difficulty-selection" style="display:none;">
-       <h2>Επιλέξτε επίπεδο δυσκολίας:</h2>
-       <button class="difficulty-btn" onclick="selectDifficulty('easy')">Εύκολο</button>
-       <button class="difficulty-btn" onclick="selectDifficulty('medium')">Μεσαίο</button>
-       <button class="difficulty-btn" onclick="selectDifficulty('hard')">Δύσκολο</button>
-   </div>
-
-   <div id="quiz-container" style="display:none;">
-       <h2>Μάθημα: <span id="current-subject"></span></h2>
-       <h3>Επίπεδο: <span id="current-difficulty"></span></h3>
-       <h3 id="question">Ερώτηση εδώ</h3>
-       <ul id="choices"></ul>
-       <button onclick="nextQuestion()">Επόμενη Ερώτηση</button>
-       <button onclick="restartQuiz()">Νέο Παιχνίδι</button>
-   </div>
+   <!-- Ήχοι σωστής και λάθος απάντησης -->
+   <audio id="correctSound" src="/static/sounds/correct.mp3"></audio>
+   <audio id="wrongSound" src="/static/sounds/wrong.mp3"></audio>
 
    <script>
        let selectedSubject = "";
        let currentDifficulty = "";
+       let score = 0;
 
        function selectSubject(subject) {
            selectedSubject = subject;
@@ -107,13 +141,16 @@
            choices[correctIndex].style.backgroundColor = '#90EE90'; // Πράσινο για τη σωστή απάντηση
            
            if (selectedIndex === correctIndex) {
+               document.getElementById('correctSound').play();
                alert('Σωστή απάντηση!');
+               score++;
+               document.getElementById('score').innerText = score;
            } else {
+               document.getElementById('wrongSound').play();
                choices[selectedIndex].style.backgroundColor = '#FFB6C1'; // Κόκκινο για λάθος απάντηση
                alert('Λάθος απάντηση!');
            }
 
-           // Περίμενε λίγο πριν την επόμενη ερώτηση
            setTimeout(() => {
                nextQuestion();
                choices.forEach(choice => choice.style.backgroundColor = ''); // Επαναφορά χρωμάτων
@@ -123,6 +160,8 @@
        function restartQuiz() {
            selectedSubject = "";
            currentDifficulty = "";
+           score = 0;
+           document.getElementById('score').innerText = score;
            document.getElementById('subject-selection').style.display = 'block';
            document.getElementById('difficulty-selection').style.display = 'none';
            document.getElementById('quiz-container').style.display = 'none';
