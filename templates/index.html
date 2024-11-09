@@ -123,10 +123,10 @@
                    document.getElementById('question').innerText = data.question;
                    const choicesList = document.getElementById('choices');
                    choicesList.innerHTML = '';
-                   data.answers.forEach((answer, index) => {
+                   data.choices.forEach((choice, index) => {
                        const li = document.createElement('li');
-                       li.innerText = answer;
-                       li.onclick = () => checkAnswer(index, data.correct);
+                       li.innerText = choice;
+                       li.onclick = () => checkAnswer(index, data.correct_answer_index);
                        choicesList.appendChild(li);
                    });
                })
