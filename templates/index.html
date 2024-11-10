@@ -184,7 +184,7 @@
     <audio id="correctSound" src="/static/sounds/correct.mp3"></audio>
     <audio id="wrongSound" src="/static/sounds/wrong.mp3"></audio>
 
-    <script>
+    <script defer>
         let selectedSubject = "";
         let currentDifficulty = "";
         let score = 0;
@@ -213,39 +213,21 @@
         }
 
         function loadQuestions() {
-            console.log(`Fetching questions for subject: ${selectedSubject}, difficulty: ${currentDifficulty}`);
-            
             const url = `/get_questions?subject=${encodeURIComponent(selectedSubject)}&difficulty=${currentDifficulty}`;
-            console.log('Requesting URL:', url);
-            
             fetch(url)
                 .then(response => {
-                    console.log('Response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Received data:', data);
                     if (data.error) {
-                        console.error('Server returned error:', data.error);
                         alert(data.error);
-                        return;
-                    }
-                    if (!data.questions || !Array.isArray(data.questions)) {
-                        console.error('Invalid data format:', data);
-                        alert('Λάθος μορφή δεδομένων από τον server');
                         return;
                     }
                     questions = data.questions;
                     totalQuestions = questions.length;
-                    console.log(`Loaded ${totalQuestions} questions`);
-                    
-                    if (questions.length > 0) {
-                        console.log('First question structure:', questions[0]);
-                    }
-                    
                     nextQuestion();
                 })
                 .catch(error => {
