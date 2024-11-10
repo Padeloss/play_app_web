@@ -265,29 +265,33 @@
                 choices[selectedIndex].style.backgroundColor = '#90EE90';
             } else {
                 document.getElementById('wrongSound').play().catch(e => console.log('Audio play failed:', e));
-                choices[selectedIndex].style.backgroundColor = '#FFB6C1';
+                choices[selectedIndex].style.backgroundColor = '#FFCCCB';
                 choices[correctIndex].style.backgroundColor = '#90EE90';
             }
 
-            setTimeout(() => {
-                currentQuestionIndex++;
-                updateScore();
-                nextQuestion();
-            }, 1500);
-        }
-
-        function updateScore() {
-            const percentage = Math.round((score / totalQuestions) * 100);
-            document.getElementById('score').innerText = `${percentage}%`;
+            currentQuestionIndex++;
         }
 
         function endGame() {
+            const percentage = ((score / totalQuestions) * 100).toFixed(2);
+            document.getElementById('final-score').innerText = `${percentage}%`;
             document.getElementById('quiz-container').style.display = 'none';
             document.getElementById('end-message').style.display = 'block';
-            document.getElementById('final-score').innerText = `${Math.round((score / totalQuestions) * 100)}%`;
         }
 
         function restartQuiz() {
-            selectedSubject = "";
-            currentDifficulty = "";
             score = 0;
+            currentQuestionIndex = 0;
+            document.getElementById('score').innerText = '0%';
+            document.getElementById('end-message').style.display = 'none';
+            document.getElementById('subject-selection').style.display = 'block';
+            document.getElementById('difficulty-selection').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'none';
+        }
+
+        function exitGame() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
