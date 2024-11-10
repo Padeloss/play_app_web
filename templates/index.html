@@ -71,15 +71,10 @@
             font-size: clamp(0.9rem, 3vw, 1rem);
             width: auto;
             min-width: 120px;
-            transition: background-color 0.3s, transform 0.1s;
         }
 
         .difficulty-btn:active {
             transform: scale(0.98);
-        }
-
-        .difficulty-btn.selected {
-            background-color: #2E7D32;
         }
 
         #choices {
@@ -98,15 +93,11 @@
             width: 100%;
             font-size: clamp(0.9rem, 3vw, 1rem);
             transition: background-color 0.3s;
-            min-height: 44px; /* Ελάχιστο ύψος για καλύτερο touch target */
+            min-height: 44px;
         }
 
         #choices button:hover {
             background-color: #f0f0f0;
-        }
-
-        #choices button:active {
-            background-color: #e8e8e8;
         }
 
         .score {
@@ -121,7 +112,6 @@
             padding: 0 0.5rem;
         }
 
-        /* Προσθήκη στυλ για τα κουμπιά ελέγχου */
         .control-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -130,18 +120,6 @@
             margin: 1rem 0;
         }
 
-        .control-buttons button {
-            padding: 0.8rem 1.2rem;
-            border: none;
-            border-radius: 5px;
-            background-color: #4CAF50;
-            color: white;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-            cursor: pointer;
-            min-width: 120px;
-        }
-
-        /* Media queries για διαφορετικά μεγέθη οθόνης */
         @media (max-width: 480px) {
             .container {
                 padding: 0.8rem;
@@ -155,20 +133,6 @@
 
             #choices button {
                 padding: 0.8rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .container {
-                padding: 2rem;
-            }
-
-            #choices {
-                gap: 1rem;
-            }
-
-            .difficulty-btn:hover {
-                background-color: #45a049;
             }
         }
     </style>
@@ -227,8 +191,7 @@
         let totalQuestions = 0;
         let currentQuestionIndex = 0;
         let questions = [];
-        
-        // Προσθήκη υποστήριξης για touch events
+
         document.addEventListener('touchstart', function() {}, false);
 
         function selectSubject(subject) {
@@ -250,19 +213,43 @@
         }
 
         function loadQuestions() {
-            fetch(`/get_questions?subject=${encodeURIComponent(selectedSubject)}&difficulty=${currentDifficulty}`)
-                .then(response => response.json())
+            console.log(`Fetching questions for subject: ${selectedSubject}, difficulty: ${currentDifficulty}`);
+            
+            const url = `/get_questions?subject=${encodeURIComponent(selectedSubject)}&difficulty=${currentDifficulty}`;
+            console.log('Requesting URL:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Received data:', data);
                     if (data.error) {
+                        console.error('Server returned error:', data.error);
                         alert(data.error);
+                        return;
+                    }
+                    if (!data.questions || !Array.isArray(data.questions)) {
+                        console.error('Invalid data format:', data);
+                        alert('Λάθος μορφή δεδομένων από τον server');
                         return;
                     }
                     questions = data.questions;
                     totalQuestions = questions.length;
+                    console.log(`Loaded ${totalQuestions} questions`);
+                    
+                    if (questions.length > 0) {
+                        console.log('First question structure:', questions[0]);
+                    }
+                    
                     nextQuestion();
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('Fetch error:', error);
                     alert('Υπήρξε ένα σφάλμα κατά τη φόρτωση των ερωτήσεων.');
                 });
         }
@@ -288,14 +275,14 @@
 
         function checkAnswer(selectedIndex, correctIndex) {
             const choices = document.querySelectorAll('#choices button');
-            choices.forEach(button => button.disabled = true); // Απενεργοποίηση κουμπιών μετά την απάντηση
+            choices.forEach(button => button.disabled = true);
 
             if (selectedIndex === correctIndex) {
-                document.getElementById('correctSound').play();
+                document.getElementById('correctSound').play().catch(e => console.log('Audio play failed:', e));
                 score++;
                 choices[selectedIndex].style.backgroundColor = '#90EE90';
             } else {
-                document.getElementById('wrongSound').play();
+                document.getElementById('wrongSound').play().catch(e => console.log('Audio play failed:', e));
                 choices[selectedIndex].style.backgroundColor = '#FFB6C1';
                 choices[correctIndex].style.backgroundColor = '#90EE90';
             }
@@ -322,18 +309,3 @@
             selectedSubject = "";
             currentDifficulty = "";
             score = 0;
-            totalQuestions = 0;
-            currentQuestionIndex = 0;
-            document.getElementById('score').innerText = '0%';
-            document.getElementById('subject-selection').style.display = 'block';
-            document.getElementById('difficulty-selection').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'none';
-            document.getElementById('end-message').style.display = 'none';
-        }
-
-        function exitGame() {
-            window.location.href = '/';
-        }
-    </script>
-</body>
-</html>
