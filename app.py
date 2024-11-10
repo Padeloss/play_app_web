@@ -10,7 +10,8 @@ LESSONS_FOLDER = os.path.join(os.path.dirname(__file__), 'lessons')
 
 def load_questions(subject, difficulty):
     file_path = os.path.join(LESSONS_FOLDER, subject, f"{difficulty}.json")
-    print("Αναζητούμε το αρχείο:", file_path)  # Προσθέτει έλεγχο διαδρομής
+    print("Αναζητούμε το αρχείο:", file_path)
+    
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -24,27 +25,32 @@ def index():
     subjects = [f for f in os.listdir(LESSONS_FOLDER) if os.path.isdir(os.path.join(LESSONS_FOLDER, f))]
     return render_template('index.html', subjects=subjects)
 
-@app.route('/get_question', methods=['GET'])
-def get_question():
-    """Επιστρέφει μία τυχαία ερώτηση για το επιλεγμένο μάθημα και βαθμό δυσκολίας."""
+@app.route('/get_questions', methods=['GET'])
+def get_questions():
+    """Επιστρέφει ερωτήσεις για το επιλεγμένο μάθημα και βαθμό δυσκολίας."""
     subject = request.args.get('subject')
     difficulty = request.args.get('difficulty')
-    questions = load_questions(subject, difficulty)
     
-    if questions:
-        question = random.choice(questions)
+    print(f"Λήφθηκε αίτημα για μάθημα: {subject}, δυσκολία: {difficulty}")
+    
+    questions_data = load_questions(subject, difficulty)
+    
+    if questions_data:
+        # Μετατροπή των questions σε κατάλληλη μορφή
+        formatted_questions = []
+        for question in questions_data:
+            correct_answer_index = int(question['answer']) - 1
+            formatted_question = {
+                'question': question['question'],
+                'answers': question['choices'],
+                'correct': correct_answer_index
+            }
+            formatted_questions.append(formatted_question)
         
-        # Αν η σωστή απάντηση είναι η 1, 2, 3 κλπ. (όχι 0), κάνουμε την κατάλληλη αντιστοίχιση
-        correct_answer_index = int(question['answer']) - 1  # Αν η σωστή απάντηση είναι 1, το index είναι 0 κλπ.
-        
-        # Προσθήκη της σωστής απάντησης στο αποτέλεσμα
-        question['correct_answer'] = question['choices'][correct_answer_index]
-        
-        # Επιστρέφουμε την ερώτηση με τις επιλογές
-        return jsonify(question)
+        return jsonify({'questions': formatted_questions})
     
     return jsonify({"error": "Το μάθημα ή η βαθμίδα δυσκολίας δεν βρέθηκε"}), 404
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=True)  # Άλλαξα το debug σε True για development
