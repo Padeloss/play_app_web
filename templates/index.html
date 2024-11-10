@@ -6,140 +6,233 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Game</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4CAF50;
+            --error-color: #ef476f;
+            --background-color: #f8f9fa;
+            --text-color: #2b2d42;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-image: url('/static/background.jpg');
+            font-family: 'Roboto', Arial, sans-serif;
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: #333;
+            color: var(--text-color);
             min-height: 100vh;
-            padding: 1rem;
+            padding: 2rem;
         }
 
         .container {
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
             margin: 1rem auto;
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
             text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px var(--shadow-color);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
         }
 
         h1 {
-            font-size: clamp(1.5rem, 5vw, 2rem);
-            margin-bottom: 1rem;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 700;
         }
 
         h2 {
-            font-size: clamp(1.2rem, 4vw, 1.5rem);
-            margin: 1rem 0;
+            font-size: clamp(1.4rem, 4vw, 1.8rem);
+            margin: 1.5rem 0;
+            color: var(--secondary-color);
         }
 
         h3 {
-            font-size: clamp(1rem, 3.5vw, 1.3rem);
-            margin: 0.8rem 0;
+            font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+            margin: 1rem 0;
+            color: var(--text-color);
         }
 
         #subjects {
             list-style: none;
             padding: 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
         .difficulty-btn {
-            margin: 0.5rem;
-            padding: 0.8rem 1.2rem;
+            padding: 1rem 1.5rem;
             cursor: pointer;
-            background-color: #4CAF50;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-            width: auto;
-            min-width: 120px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .difficulty-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow-color);
         }
 
         .difficulty-btn:active {
-            transform: scale(0.98);
+            transform: translateY(0);
         }
 
         #choices {
             display: flex;
             flex-direction: column;
-            gap: 0.8rem;
-            margin: 1rem 0;
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
         #choices button {
             cursor: pointer;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
+            padding: 1.2rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            background-color: white;
             width: 100%;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-            transition: background-color 0.3s;
-            min-height: 44px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         #choices button:hover {
-            background-color: #f0f0f0;
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+            border-color: var(--primary-color);
+        }
+
+        #choices button::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background-color: var(--primary-color);
+            opacity: 0.1;
+            transition: width 0.3s ease;
+            top: 0;
+        }
+
+        #choices button:hover::before {
+            width: 100%;
         }
 
         .score {
-            font-size: clamp(1rem, 3.5vw, 1.2rem);
-            margin: 1rem 0;
+            font-size: 1.3rem;
+            margin: 1.5rem 0;
             font-weight: bold;
+            color: var(--primary-color);
+            padding: 1rem;
+            border-radius: 12px;
+            background-color: rgba(67, 97, 238, 0.1);
         }
 
         #question {
-            margin: 1.5rem 0;
-            line-height: 1.4;
-            padding: 0 0.5rem;
+            margin: 2rem 0;
+            line-height: 1.6;
+            padding: 1rem;
+            background-color: rgba(67, 97, 238, 0.05);
+            border-radius: 12px;
+            font-size: 1.1rem;
         }
 
         .control-buttons {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.8rem;
+            gap: 1rem;
             justify-content: center;
-            margin: 1rem 0;
+            margin: 1.5rem 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
         }
 
         @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+
             .container {
-                padding: 0.8rem;
+                padding: 1.5rem;
                 margin: 0.5rem auto;
             }
 
             .difficulty-btn {
-                padding: 0.7rem 1rem;
-                margin: 0.3rem;
+                padding: 0.8rem 1.2rem;
             }
 
             #choices button {
-                padding: 0.8rem;
+                padding: 1rem;
             }
+        }
+
+        /* Correct/Wrong animations */
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrongAnswer {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .correct-answer {
+            animation: correctAnswer 0.5s ease;
+            background-color: rgba(76, 175, 80, 0.2) !important;
+            border-color: var(--success-color) !important;
+        }
+
+        .wrong-answer {
+            animation: wrongAnswer 0.5s ease;
+            background-color: rgba(239, 71, 111, 0.2) !important;
+            border-color: var(--error-color) !important;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container fade-in">
         <h1>Καλωσορίσατε στο Quiz Game</h1>
         
         <div id="subject-selection">
@@ -167,17 +260,17 @@
             <h3 id="question">Ερώτηση εδώ</h3>
             <div id="choices"></div>
             <div class="control-buttons">
-                <button onclick="nextQuestion()">Επόμενη Ερώτηση</button>
-                <button onclick="restartQuiz()">Νέο Παιχνίδι</button>
+                <button class="difficulty-btn" onclick="nextQuestion()">Επόμενη Ερώτηση</button>
+                <button class="difficulty-btn" onclick="restartQuiz()">Νέο Παιχνίδι</button>
             </div>
         </div>
 
         <div id="end-message" style="display:none;">
             <h2>Τέλος Παιχνιδιού</h2>
-            <p class="score">Σκορ: <span id="final-score">0%</span></p>
+            <p class="score">Τελικό Σκορ: <span id="final-score">0%</span></p>
             <div class="control-buttons">
-                <button onclick="restartQuiz()">Ξεκίνα Ξανά</button>
-                <button onclick="exitGame()">Έξοδος</button>
+                <button class="difficulty-btn" onclick="restartQuiz()">Ξεκίνα Ξανά</button>
+                <button class="difficulty-btn" onclick="exitGame()">Έξοδος</button>
             </div>
         </div>
     </div>
@@ -185,7 +278,7 @@
     <audio id="correctSound" src="/static/sounds/correct.mp3"></audio>
     <audio id="wrongSound" src="/static/sounds/wrong.mp3"></audio>
 
-    <script defer>
+    <script>
         let selectedSubject = "";
         let currentDifficulty = "";
         let score = 0;
@@ -195,11 +288,23 @@
 
         document.addEventListener('touchstart', function() {}, false);
 
+        function showElement(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.classList.add('fade-in');
+        }
+
+        function hideElement(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'none';
+            element.classList.remove('fade-in');
+        }
+
         function selectSubject(subject) {
             selectedSubject = subject;
             document.getElementById('current-subject').innerText = subject;
-            document.getElementById('subject-selection').style.display = 'none';
-            document.getElementById('difficulty-selection').style.display = 'block';
+            hideElement('subject-selection');
+            showElement('difficulty-selection');
         }
 
         function selectDifficulty(difficulty) {
@@ -208,8 +313,8 @@
                 difficulty === 'easy' ? 'Εύκολο' :
                 difficulty === 'medium' ? 'Μεσαίο' : 'Δύσκολο';
             
-            document.getElementById('difficulty-selection').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'block';
+            hideElement('difficulty-selection');
+            showElement('quiz-container');
             loadQuestions();
         }
 
@@ -252,6 +357,7 @@
                 const button = document.createElement('button');
                 button.innerText = answer;
                 button.onclick = () => checkAnswer(index, question.correct);
+                button.classList.add('fade-in');
                 choicesDiv.appendChild(button);
             });
         }
@@ -263,31 +369,37 @@
             if (selectedIndex === correctIndex) {
                 document.getElementById('correctSound').play().catch(e => console.log('Audio play failed:', e));
                 score++;
-                choices[selectedIndex].style.backgroundColor = '#90EE90';
+                choices[selectedIndex].classList.add('correct-answer');
             } else {
                 document.getElementById('wrongSound').play().catch(e => console.log('Audio play failed:', e));
-                choices[selectedIndex].style.backgroundColor = '#FFCCCB';
-                choices[correctIndex].style.backgroundColor = '#90EE90';
+                choices[selectedIndex].classList.add('wrong-answer');
+                choices[correctIndex].classList.add('correct-answer');
             }
 
+            const percentage = ((score / (currentQuestionIndex + 1)) * 100).toFixed(2);
+            document.getElementById('score').innerText = `${percentage}%`;
+
             currentQuestionIndex++;
+            setTimeout(() => {
+                nextQuestion();
+            }, 1500);
         }
 
         function endGame() {
             const percentage = ((score / totalQuestions) * 100).toFixed(2);
             document.getElementById('final-score').innerText = `${percentage}%`;
-            document.getElementById('quiz-container').style.display = 'none';
-            document.getElementById('end-message').style.display = 'block';
+            hideElement('quiz-container');
+            showElement('end-message');
         }
 
         function restartQuiz() {
             score = 0;
             currentQuestionIndex = 0;
             document.getElementById('score').innerText = '0%';
-            document.getElementById('end-message').style.display = 'none';
-            document.getElementById('subject-selection').style.display = 'block';
-            document.getElementById('difficulty-selection').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'none';
+            hideElement('end-message');
+            showElement('subject-selection');
+            hideElement('difficulty-selection');
+            hideElement('quiz-container');
         }
 
         function exitGame() {
