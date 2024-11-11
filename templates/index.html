@@ -192,120 +192,129 @@
         let currentQuestionIndex = 0;
         let questions = [];
 
-        document.addEventListener('touchstart', function() {}, false);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Εδώ βεβαιωνόμαστε ότι ολόκληρο το DOM είναι έτοιμο πριν εκτελέσουμε τις συναρτήσεις
 
-        function selectSubject(subject) {
-            selectedSubject = subject;
-            document.getElementById('current-subject').innerText = subject;
-            document.getElementById('subject-selection').style.display = 'none';
-            document.getElementById('difficulty-selection').style.display = 'block';
-        }
+            function selectSubject(subject) {
+                selectedSubject = subject;
+                document.getElementById('current-subject').innerText = subject;
+                document.getElementById('subject-selection').style.display = 'none';
+                document.getElementById('difficulty-selection').style.display = 'block';
+            }
 
-        function selectDifficulty(difficulty) {
-            currentDifficulty = difficulty;
-            document.getElementById('current-difficulty').innerText = 
-                difficulty === 'easy' ? 'Εύκολο' :
-                difficulty === 'medium' ? 'Μεσαίο' : 'Δύσκολο';
-            
-            document.getElementById('difficulty-selection').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'block';
-            loadQuestions();
-        }
+            function selectDifficulty(difficulty) {
+                currentDifficulty = difficulty;
+                document.getElementById('current-difficulty').innerText = 
+                    difficulty === 'easy' ? 'Εύκολο' :
+                    difficulty === 'medium' ? 'Μεσαίο' : 'Δύσκολο';
+                
+                document.getElementById('difficulty-selection').style.display = 'none';
+                document.getElementById('quiz-container').style.display = 'block';
+                loadQuestions();
+            }
 
-        function loadQuestions() {
-            console.log(`Fetching questions for subject: ${selectedSubject}, difficulty: ${currentDifficulty}`);
-            
-            const url = `/get_questions?subject=${encodeURIComponent(selectedSubject)}&difficulty=${currentDifficulty}`;
-            console.log('Requesting URL:', url);
-            
-            fetch(url)
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Received data:', data);
-                    if (data.error) {
-                        console.error('Server returned error:', data.error);
-                        alert(data.error);
-                        return;
-                    }
-                    if (!data.questions || !Array.isArray(data.questions)) {
-                        console.error('Invalid data format:', data);
-                        alert('Λάθος μορφή δεδομένων από τον server');
-                        return;
-                    }
-                    questions = data.questions;
-                    totalQuestions = questions.length;
-                    console.log(`Loaded ${totalQuestions} questions`);
-                    
-                    if (questions.length > 0) {
-                        console.log('First question structure:', questions[0]);
-                    }
-                    
-                    nextQuestion();
-                })
-                .catch(error => {
-                    console.error('Fetch error:', error);
-                    alert('Υπήρξε ένα σφάλμα κατά τη φόρτωση των ερωτήσεων.');
+            function loadQuestions() {
+                console.log(`Fetching questions for subject: ${selectedSubject}, difficulty: ${currentDifficulty}`);
+                
+                const url = `/get_questions?subject=${encodeURIComponent(selectedSubject)}&difficulty=${currentDifficulty}`;
+                console.log('Requesting URL:', url);
+                
+                fetch(url)
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Received data:', data);
+                        if (data.error) {
+                            console.error('Server returned error:', data.error);
+                            alert(data.error);
+                            return;
+                        }
+                        if (!data.questions || !Array.isArray(data.questions)) {
+                            console.error('Invalid data format:', data);
+                            alert('Λάθος μορφή δεδομένων από τον server');
+                            return;
+                        }
+                        questions = data.questions;
+                        totalQuestions = questions.length;
+                        console.log(`Loaded ${totalQuestions} questions`);
+                        
+                        if (questions.length > 0) {
+                            console.log('First question structure:', questions[0]);
+                        }
+                        
+                        nextQuestion();
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        alert('Υπήρξε ένα σφάλμα κατά τη φόρτωση των ερωτήσεων.');
+                    });
+            }
+
+            function nextQuestion() {
+                if (currentQuestionIndex >= totalQuestions) {
+                    showEndMessage();
+                    return;
+                }
+                const question = questions[currentQuestionIndex];
+                document.getElementById('question').innerText = question.text;
+                const choicesDiv = document.getElementById('choices');
+                choicesDiv.innerHTML = ''; // Clear previous choices
+                
+                question.choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.innerText = choice;
+                    button.onclick = () => checkAnswer(index);
+                    choicesDiv.appendChild(button);
                 });
-        }
-
-        function nextQuestion() {
-            if (currentQuestionIndex >= totalQuestions) {
-                endGame();
-                return;
             }
 
-            const question = questions[currentQuestionIndex];
-            document.getElementById('question').innerText = question.question;
-            const choicesDiv = document.getElementById('choices');
-            choicesDiv.innerHTML = '';
-            
-            question.answers.forEach((answer, index) => {
-                const button = document.createElement('button');
-                button.innerText = answer;
-                button.onclick = () => checkAnswer(index, question.correct);
-                choicesDiv.appendChild(button);
-            });
-        }
-
-        function checkAnswer(selectedIndex, correctIndex) {
-            const choices = document.querySelectorAll('#choices button');
-            choices.forEach(button => button.disabled = true);
-
-            if (selectedIndex === correctIndex) {
-                document.getElementById('correctSound').play().catch(e => console.log('Audio play failed:', e));
-                score++;
-                choices[selectedIndex].style.backgroundColor = '#90EE90';
-            } else {
-                document.getElementById('wrongSound').play().catch(e => console.log('Audio play failed:', e));
-                choices[selectedIndex].style.backgroundColor = '#FFB6C1';
-                choices[correctIndex].style.backgroundColor = '#90EE90';
-            }
-
-            setTimeout(() => {
+            function checkAnswer(selectedIndex) {
+                const question = questions[currentQuestionIndex];
+                const correctIndex = question.correct_answer_index;
+                
+                if (selectedIndex === correctIndex) {
+                    score += 10;
+                    document.getElementById('correctSound').play();
+                } else {
+                    document.getElementById('wrongSound').play();
+                }
+                
+                document.getElementById('score').innerText = `${(score / (totalQuestions * 10)) * 100}%`;
                 currentQuestionIndex++;
-                updateScore();
                 nextQuestion();
-            }, 1500);
-        }
+            }
 
-        function updateScore() {
-            const percentage = Math.round((score / totalQuestions) * 100);
-            document.getElementById('score').innerText = `${percentage}%`;
-        }
+            function showEndMessage() {
+                document.getElementById('quiz-container').style.display = 'none';
+                document.getElementById('end-message').style.display = 'block';
+                document.getElementById('final-score').innerText = `${(score / (totalQuestions * 10)) * 100}%`;
+            }
 
-        function endGame() {
-            document.getElementById('quiz-container').style.display = 'none';
-            document.getElementById('end-message').style.display = 'block';
-            document.getElementById('final-score').innerText = `${Math.round((score / totalQuestions) * 100)}%`;
-        }
+            function restartQuiz() {
+                score = 0;
+                currentQuestionIndex = 0;
+                document.getElementById('score').innerText = '0%';
+                document.getElementById('end-message').style.display = 'none';
+                document.getElementById('quiz-container').style.display = 'none';
+                document.getElementById('subject-selection').style.display = 'block';
+            }
 
-        function restartQuiz() {
-            selectedSubject = "";
-            currentDifficulty = "";
-            score = 0;
+            function exitGame() {
+                window.location.href = '/';
+            }
+
+            // Assign functions to window object to make them accessible from HTML
+            window.selectSubject = selectSubject;
+            window.selectDifficulty = selectDifficulty;
+            window.nextQuestion = nextQuestion;
+            window.restartQuiz = restartQuiz;
+            window.exitGame = exitGame;
+        });
+    </script>
+</body>
+</html>
