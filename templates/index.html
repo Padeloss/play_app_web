@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Game</title>
@@ -136,27 +135,6 @@
                 padding: 0.8rem;
             }
         }
-
-        .leaderboard {
-            margin-top: 2rem;
-            text-align: center;
-        }
-
-        .leaderboard table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .leaderboard th, .leaderboard td {
-            padding: 8px;
-            border: 1px solid #ddd;
-        }
-
-        #timer {
-            font-size: 1.2rem;
-            margin: 0.5rem;
-            color: #ff5555;
-        }
     </style>
 </head>
 <body>
@@ -185,7 +163,6 @@
             <h2>Μάθημα: <span id="current-subject"></span></h2>
             <h3>Επίπεδο: <span id="current-difficulty"></span></h3>
             <div class="score">Σκορ: <span id="score">0%</span></div>
-            <div id="timer">Χρόνος: <span id="time-remaining">10</span> δευτερόλεπτα</div>
             <h3 id="question">Ερώτηση εδώ</h3>
             <div id="choices"></div>
             <div class="control-buttons">
@@ -201,34 +178,19 @@
                 <button onclick="restartQuiz()">Ξεκίνα Ξανά</button>
                 <button onclick="exitGame()">Έξοδος</button>
             </div>
-            <div class="leaderboard">
-                <h2>Πίνακας Αποτελεσμάτων</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Όνομα</th>
-                            <th>Σκορ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-table">
-                        <!-- Οι εγγραφές του πίνακα θα προστεθούν εδώ δυναμικά -->
-                    </tbody>
-                </table>
-            </div>
         </div>
     </div>
 
     <audio id="correctSound" src="/static/sounds/correct.mp3"></audio>
     <audio id="wrongSound" src="/static/sounds/wrong.mp3"></audio>
 
-    <script defer>
+    <script>
         let selectedSubject = "";
         let currentDifficulty = "";
         let score = 0;
         let totalQuestions = 0;
         let currentQuestionIndex = 0;
         let questions = [];
-        let timerInterval;
 
         document.addEventListener('touchstart', function() {}, false);
 
@@ -251,111 +213,99 @@
         }
 
         function loadQuestions() {
+            console.log(`Fetching questions for subject: ${selectedSubject}, difficulty: ${currentDifficulty}`);
+            
             const url = `/get_questions?subject=${encodeURIComponent(selectedSubject)}&difficulty=${currentDifficulty}`;
+            console.log('Requesting URL:', url);
+            
             fetch(url)
                 .then(response => {
+                    console.log('Response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Received data:', data);
+                    if (data.error) {
+                        console.error('Server returned error:', data.error);
+                        alert(data.error);
+                        return;
+                    }
+                    if (!data.questions || !Array.isArray(data.questions)) {
+                        console.error('Invalid data format:', data);
+                        alert('Λάθος μορφή δεδομένων από τον server');
+                        return;
+                    }
                     questions = data.questions;
                     totalQuestions = questions.length;
-                    currentQuestionIndex = 0;
-                    score = 0;
-                    displayQuestion();
+                    console.log(`Loaded ${totalQuestions} questions`);
+                    
+                    if (questions.length > 0) {
+                        console.log('First question structure:', questions[0]);
+                    }
+                    
+                    nextQuestion();
                 })
-                .catch(error => console.error('Fetch error:', error));
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('Υπήρξε ένα σφάλμα κατά τη φόρτωση των ερωτήσεων.');
+                });
         }
 
-        function displayQuestion() {
+        function nextQuestion() {
             if (currentQuestionIndex >= totalQuestions) {
                 endGame();
                 return;
             }
 
-            clearInterval(timerInterval);
-            const currentQuestion = questions[currentQuestionIndex];
-            document.getElementById('question').innerText = currentQuestion.text;
-            const choicesContainer = document.getElementById('choices');
-            choicesContainer.innerHTML = "";
-
-            currentQuestion.choices.forEach((choice, index) => {
+            const question = questions[currentQuestionIndex];
+            document.getElementById('question').innerText = question.question;
+            const choicesDiv = document.getElementById('choices');
+            choicesDiv.innerHTML = '';
+            
+            question.answers.forEach((answer, index) => {
                 const button = document.createElement('button');
-                button.innerText = choice;
-                button.onclick = () => checkAnswer(index);
-                choicesContainer.appendChild(button);
+                button.innerText = answer;
+                button.onclick = () => checkAnswer(index, question.correct);
+                choicesDiv.appendChild(button);
             });
-
-            document.getElementById('time-remaining').innerText = "10";
-            startTimer();
         }
 
-        function startTimer() {
-            let timeLeft = 10;
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('time-remaining').innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    nextQuestion();
-                }
-            }, 1000);
-        }
+        function checkAnswer(selectedIndex, correctIndex) {
+            const choices = document.querySelectorAll('#choices button');
+            choices.forEach(button => button.disabled = true);
 
-        function checkAnswer(selectedIndex) {
-            clearInterval(timerInterval);
-            const currentQuestion = questions[currentQuestionIndex];
-            if (selectedIndex === currentQuestion.correctIndex) {
-                document.getElementById('correctSound').play();
+            if (selectedIndex === correctIndex) {
+                document.getElementById('correctSound').play().catch(e => console.log('Audio play failed:', e));
                 score++;
+                choices[selectedIndex].style.backgroundColor = '#90EE90';
             } else {
-                document.getElementById('wrongSound').play();
+                document.getElementById('wrongSound').play().catch(e => console.log('Audio play failed:', e));
+                choices[selectedIndex].style.backgroundColor = '#FFB6C1';
+                choices[correctIndex].style.backgroundColor = '#90EE90';
             }
-            currentQuestionIndex++;
-            displayQuestion();
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                updateScore();
+                nextQuestion();
+            }, 1500);
         }
 
-        function nextQuestion() {
-            displayQuestion();
-        }
-
-        function restartQuiz() {
-            selectedSubject = "";
-            currentDifficulty = "";
-            document.getElementById('current-subject').innerText = "";
-            document.getElementById('current-difficulty').innerText = "";
-            document.getElementById('subject-selection').style.display = 'block';
-            document.getElementById('difficulty-selection').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'none';
-            document.getElementById('end-message').style.display = 'none';
+        function updateScore() {
+            const percentage = Math.round((score / totalQuestions) * 100);
+            document.getElementById('score').innerText = `${percentage}%`;
         }
 
         function endGame() {
             document.getElementById('quiz-container').style.display = 'none';
             document.getElementById('end-message').style.display = 'block';
-            const percentageScore = ((score / totalQuestions) * 100).toFixed(0);
-            document.getElementById('final-score').innerText = `${percentageScore}%`;
-            updateLeaderboard(percentageScore);
+            document.getElementById('final-score').innerText = `${Math.round((score / totalQuestions) * 100)}%`;
         }
 
-        function updateLeaderboard(finalScore) {
-            const playerName = prompt("Πληκτρολογήστε το όνομά σας για τον πίνακα αποτελεσμάτων:");
-            if (playerName) {
-                const leaderboardTable = document.getElementById('leaderboard-table');
-                const newRow = leaderboardTable.insertRow();
-                const nameCell = newRow.insertCell(0);
-                const scoreCell = newRow.insertCell(1);
-                nameCell.innerText = playerName;
-                scoreCell.innerText = `${finalScore}%`;
-            }
-        }
-
-        function exitGame() {
-            alert("Ευχαριστούμε που παίξατε!");
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+        function restartQuiz() {
+            selectedSubject = "";
+            currentDifficulty = "";
+            score = 0;
