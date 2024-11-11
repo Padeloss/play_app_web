@@ -39,7 +39,10 @@ def get_questions():
         # Μετατροπή των questions σε κατάλληλη μορφή
         formatted_questions = []
         for question in questions_data:
+            # Εξαγωγή του αριθμού της σωστής απάντησης
             correct_answer_index = int(question['answer']) - 1
+            
+            # Αντιστοίχιση του αριθμού της απάντησης με το αντίστοιχο κείμενο της επιλογής
             formatted_question = {
                 'question': question['question'],
                 'answers': question['choices'],
